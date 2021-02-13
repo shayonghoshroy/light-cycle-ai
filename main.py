@@ -16,12 +16,12 @@ class Grid:
     def draw_grid(self, blue_bike, pink_bike):
         for x in range(0, WIN_WIDTH, TILE_SIZE):
             for y in range(0, WIN_HEIGHT, TILE_SIZE):
-                pygame.draw.line(WIN, LIGHTGREY, (x, 0), (x, WIN_HEIGHT))
-                pygame.draw.line(WIN, LIGHTGREY, (0, y), (WIN_WIDTH, y))
                 if (x, y) in blue_bike.visited:
                     pygame.draw.rect(WIN, BLUE, (x, y, TILE_SIZE, TILE_SIZE))
                 if (x, y) in pink_bike.visited:
                     pygame.draw.rect(WIN, PINK, (x, y, TILE_SIZE, TILE_SIZE))
+                pygame.draw.line(WIN, LIGHTGREY, (x, 0), (x, WIN_HEIGHT))
+                pygame.draw.line(WIN, LIGHTGREY, (0, y), (WIN_WIDTH, y))
 
 
 class Bike:
