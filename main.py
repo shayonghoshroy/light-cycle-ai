@@ -1,9 +1,12 @@
-import pygame
+import pygame, sys, random
+pygame.init()
+import time
 
 WIN_WIDTH = 1920
 WIN_HEIGHT = 960
-TILE_SIZE = 16
-LIGHTGREY = (100, 100, 100)
+TILE_SIZE = 20  # common factors of window are 10, 12, 15, 16, 20, 24, 30, 32, 40, 48, 60, 64
+BIKE_SPEED = TILE_SIZE
+LIGHTGREY = (25, 25, 25)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 PINK = (255, 20, 147)
@@ -25,13 +28,22 @@ class Grid:
 
 
 class Bike:
-    def __init__(self, x, y, IMG, X_VEL):
+    def __init__(self, x, y, IMG, X_VEL, Y_VEL):
         self.x = x
         self.y = y
         self.IMG = IMG
         self.X_VEL = X_VEL
-        self.Y_VEL = 0
+        self.Y_VEL = Y_VEL
         self.visited = []
+        self.direction = ""
+        if self.X_VEL == 0 and self.Y_VEL == -BIKE_SPEED:
+            self.direction = "up"
+        elif self.X_VEL == 0 and self.Y_VEL == BIKE_SPEED:
+            self.direction = "down"
+        elif self.X_VEL == -BIKE_SPEED and self.Y_VEL == 0:
+            self.direction = "left"
+        elif self.X_VEL == BIKE_SPEED and self.Y_VEL == 0:
+            self.direction = "right"
 
     def move(self):
         self.visited += [(self.x, self.y)]
@@ -39,65 +51,129 @@ class Bike:
         self.y += self.Y_VEL
 
     def draw(self):
-        WIN.blit(self.IMG, (self.x, self.y))
+        if self.direction == "up":
+            WIN.blit(pygame.transform.rotate(self.IMG, -90), (self.x, self.y))
+        elif self.direction == "down":
+            WIN.blit(pygame.transform.rotate(self.IMG, 90), (self.x, self.y))
+        elif self.direction == "left":
+            WIN.blit(pygame.transform.rotate(self.IMG, -180), (self.x, self.y))
+        else:
+            WIN.blit(self.IMG, (self.x, self.y))
         pygame.display.update()
 
+    def set_direction(self, direction):
+        self.direction = direction
+        if self.direction == "up":
+            self.X_VEL = 0
+            self.Y_VEL = -BIKE_SPEED
+        elif self.direction == "down":
+            self.X_VEL = 0
+            self.Y_VEL = BIKE_SPEED
+        elif self.direction == "left":
+            self.X_VEL = -BIKE_SPEED
+            self.Y_VEL = 0
+        elif self.direction == "right":
+            self.X_VEL = BIKE_SPEED
+            self.Y_VEL = 0
 
-grid = Grid()
-blue_bike = Bike(0, 0, BLUE_BIKE, TILE_SIZE)
-pink_bike = Bike(WIN_WIDTH, WIN_HEIGHT-TILE_SIZE, PINK_BIKE, -TILE_SIZE)
 
-
-def draw_window(grid, blue_bike, pink_bike):
+def draw_window(grid, blue_bike, pink_bike, blue_score, pink_score):
     WIN.fill(BLACK)
+    write_scores(str(blue_score), str(pink_score))
+    blue_bike.move()
+    pink_bike.move()
     grid.draw_grid(blue_bike, pink_bike)
     blue_bike.draw()
     pink_bike.draw()
     pygame.display.update()
 
+def write(word, color):
+    font = pygame.font.Font('freesansbold.ttf', 72)
+    text = font.render(word, True, color, BLACK)
+    text_rect = text.get_rect()
+    text_rect.center = (WIN_WIDTH // 2, WIN_HEIGHT // 2)
+    WIN.fill(BLACK)
+    WIN.blit(text, text_rect)
+    pygame.display.update()
 
-def main():
+
+def write_scores(blue_score, pink_score):
+    font = pygame.font.Font('freesansbold.ttf', 48)
+    text = font.render(blue_score, True, BLUE, BLACK)
+    text_rect = text.get_rect()
+    text_rect.center = (WIN_WIDTH - text.get_width(), text.get_height())
+    WIN.blit(text, text_rect)
+    text = font.render(pink_score, True, PINK, BLACK)
+    text_rect = text.get_rect()
+    text_rect.center = (WIN_WIDTH - text.get_width(), text.get_height() * 2)
+    WIN.blit(text, text_rect)
+
+def initialize():
+    blue_score = 0
+    pink_score = 0
+    grid = Grid()
+    blue_bike = Bike(0, 0, BLUE_BIKE, BIKE_SPEED, 0)
+    pink_bike = Bike(WIN_WIDTH, WIN_HEIGHT-TILE_SIZE, PINK_BIKE, -BIKE_SPEED, 0)
+    game(grid, blue_bike, pink_bike, blue_score, pink_score)
+
+
+def reset_players(grid, blue_bike, pink_bike, blue_score, pink_score):
+    blue_bike.visited = []
+    pink_bike.visited = []
+    blue_bike.x = 0
+    blue_bike.y = 0
+    blue_bike.set_direction("right")
+    pink_bike.x = WIN_WIDTH
+    pink_bike.y = WIN_HEIGHT-TILE_SIZE
+    pink_bike.set_direction("left")
+    draw_window(grid, blue_bike, pink_bike, blue_score, pink_score)
+
+
+def check_collisions(grid, blue_bike, pink_bike, blue_score, pink_score):
+    if (blue_bike.x, blue_bike.y) in pink_bike.visited or (blue_bike.x, blue_bike.y) in blue_bike.visited\
+            or blue_bike.x < 0 or blue_bike.x > WIN_WIDTH or blue_bike.y < 0 or blue_bike.y > WIN_HEIGHT:
+        pink_score += 1
+        write_scores(str(blue_score), str(pink_score))
+        reset_players(grid, blue_bike, pink_bike, blue_score, pink_score)
+    elif (pink_bike.x, pink_bike.y) in blue_bike.visited or (pink_bike.x, pink_bike.y) in pink_bike.visited \
+            or pink_bike.x < 0 or pink_bike.x > WIN_WIDTH or pink_bike.y < 0 or pink_bike.y > WIN_HEIGHT:
+        blue_score += 1
+        write_scores(str(blue_score), str(pink_score))
+        reset_players(grid, blue_bike, pink_bike, blue_score, pink_score)
+    return blue_score, pink_score
+
+
+def game(grid, blue_bike, pink_bike, blue_score, pink_score):
     while True:
         clock = pygame.time.Clock()
         clock.tick(60)
 
-        blue_bike.move()
-        pink_bike.move()
-
-        pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
-                    blue_bike.X_VEL = 0
-                    blue_bike.Y_VEL = TILE_SIZE
+                    blue_bike.set_direction("down")
                 if event.key == pygame.K_UP:
-                    blue_bike.X_VEL = 0
-                    blue_bike.Y_VEL = -TILE_SIZE
+                    blue_bike.set_direction("up")
                 if event.key == pygame.K_RIGHT:
-                    blue_bike.X_VEL = TILE_SIZE
-                    blue_bike.Y_VEL = 0
+                    blue_bike.set_direction("right")
                 if event.key == pygame.K_LEFT:
-                    blue_bike.X_VEL = -TILE_SIZE
-                    blue_bike.Y_VEL = 0
+                    blue_bike.set_direction("left")
 
                 if event.key == pygame.K_s:
-                    pink_bike.X_VEL = 0
-                    pink_bike.Y_VEL = TILE_SIZE
+                    pink_bike.set_direction("down")
                 if event.key == pygame.K_w:
-                    pink_bike.X_VEL = 0
-                    pink_bike.Y_VEL = -TILE_SIZE
+                    pink_bike.set_direction("up")
                 if event.key == pygame.K_d:
-                    pink_bike.X_VEL = TILE_SIZE
-                    pink_bike.Y_VEL = 0
+                    pink_bike.set_direction("right")
                 if event.key == pygame.K_a:
-                    pink_bike.X_VEL = -TILE_SIZE
-                    pink_bike.Y_VEL = 0
+                    pink_bike.set_direction("left")
 
-        draw_window(grid, blue_bike, pink_bike)
+        draw_window(grid, blue_bike, pink_bike, blue_score, pink_score)
+        blue_score, pink_score = check_collisions(grid, blue_bike, pink_bike, blue_score, pink_score)
 
 
 if __name__ == '__main__':
-    main()
+    initialize()
