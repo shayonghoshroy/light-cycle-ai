@@ -1,5 +1,9 @@
 import pygame, sys, random
+from pygame import mixer
+from pygame.locals import *
+#flags = DOUBLEBUF
 pygame.init()
+mixer.init()
 import time
 
 WIN_WIDTH = 1920
@@ -13,19 +17,21 @@ PINK = (255, 20, 147)
 BLUE_BIKE = pygame.transform.scale(pygame.image.load("imgs/blue_bike.png"), (TILE_SIZE, TILE_SIZE))
 PINK_BIKE = pygame.transform.scale(pygame.image.load("imgs/pink_bike.png"), (TILE_SIZE, TILE_SIZE))
 WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+WIN.set_alpha(None)
 
 
 class Grid:
-    def draw_grid(self, blue_bike, pink_bike):
+    def __init__(self):
         for x in range(0, WIN_WIDTH, TILE_SIZE):
             for y in range(0, WIN_HEIGHT, TILE_SIZE):
-                if (x, y) in blue_bike.visited:
-                    pygame.draw.rect(WIN, BLUE, (x, y, TILE_SIZE, TILE_SIZE))
-                if (x, y) in pink_bike.visited:
-                    pygame.draw.rect(WIN, PINK, (x, y, TILE_SIZE, TILE_SIZE))
                 pygame.draw.line(WIN, LIGHTGREY, (x, 0), (x, WIN_HEIGHT))
                 pygame.draw.line(WIN, LIGHTGREY, (0, y), (WIN_WIDTH, y))
 
+    def draw_grid(self, blue_bike, pink_bike):
+        for (x, y) in blue_bike.visited:
+            pygame.draw.rect(WIN, BLUE, (x, y, TILE_SIZE, TILE_SIZE))
+        for (x, y) in pink_bike.visited:
+            pygame.draw.rect(WIN, PINK, (x, y, TILE_SIZE, TILE_SIZE))
 
 class Bike:
     def __init__(self, x, y, IMG, X_VEL, Y_VEL):
@@ -47,6 +53,7 @@ class Bike:
 
     def move(self):
         self.visited += [(self.x, self.y)]
+        #self.visited += [((self.x*2+self.X_VEL)/2, (self.y*2+self.Y_VEL)/2)]  # fill in the midpoint
         self.x += self.X_VEL
         self.y += self.Y_VEL
 
@@ -78,7 +85,6 @@ class Bike:
 
 
 def draw_window(grid, blue_bike, pink_bike, blue_score, pink_score):
-    WIN.fill(BLACK)
     write_scores(str(blue_score), str(pink_score))
     blue_bike.move()
     pink_bike.move()
@@ -108,16 +114,10 @@ def write_scores(blue_score, pink_score):
     text_rect.center = (WIN_WIDTH - text.get_width(), text.get_height() * 2)
     WIN.blit(text, text_rect)
 
-def initialize():
-    blue_score = 0
-    pink_score = 0
-    grid = Grid()
-    blue_bike = Bike(0, 0, BLUE_BIKE, BIKE_SPEED, 0)
-    pink_bike = Bike(WIN_WIDTH, WIN_HEIGHT-TILE_SIZE, PINK_BIKE, -BIKE_SPEED, 0)
-    game(grid, blue_bike, pink_bike, blue_score, pink_score)
-
 
 def reset_players(grid, blue_bike, pink_bike, blue_score, pink_score):
+    WIN.fill(BLACK)
+    grid = Grid()
     blue_bike.visited = []
     pink_bike.visited = []
     blue_bike.x = 0
@@ -142,11 +142,22 @@ def check_collisions(grid, blue_bike, pink_bike, blue_score, pink_score):
         reset_players(grid, blue_bike, pink_bike, blue_score, pink_score)
     return blue_score, pink_score
 
+# TODO: MAKE A DUPLICATE OF GAME FUNCTION FOR AI VERSION, HAVE PLAYER CHOOSE AGAINST CPU OR 2 PLAYER
 
-def game(grid, blue_bike, pink_bike, blue_score, pink_score):
+def game():
+    WIN.fill(BLACK)
+    grid = Grid()
+    blue_bike = Bike(0, 0, BLUE_BIKE, BIKE_SPEED, 0)
+    pink_bike = Bike(WIN_WIDTH, WIN_HEIGHT-TILE_SIZE, PINK_BIKE, -BIKE_SPEED, 0)
+    blue_score = 0
+    pink_score = 0
+
+    #mixer.music.load("sound/son_of_flynn.mp3")
+    #mixer.music.play()
+
     while True:
         clock = pygame.time.Clock()
-        clock.tick(60)
+        clock.tick(120)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -161,7 +172,6 @@ def game(grid, blue_bike, pink_bike, blue_score, pink_score):
                     blue_bike.set_direction("right")
                 if event.key == pygame.K_LEFT:
                     blue_bike.set_direction("left")
-
                 if event.key == pygame.K_s:
                     pink_bike.set_direction("down")
                 if event.key == pygame.K_w:
@@ -176,4 +186,4 @@ def game(grid, blue_bike, pink_bike, blue_score, pink_score):
 
 
 if __name__ == '__main__':
-    initialize()
+    game()
