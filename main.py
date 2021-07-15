@@ -34,6 +34,7 @@ WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 WIN.set_alpha(None)
 
 
+# draw lines for grid
 def spawn_grid():
     for x in range(0, WIN_WIDTH, TILE_SIZE):
         pygame.draw.line(WIN, LIGHTGREY, (x, 0), (x, WIN_HEIGHT))
@@ -41,17 +42,15 @@ def spawn_grid():
         pygame.draw.line(WIN, LIGHTGREY, (0, y), (WIN_WIDTH, y))
 
 
-def draw_grid(blue_bike, pink_bike):
+# draw visited squares for each bike
+def draw_visited(blue_bike, pink_bike):
     for (x, y) in blue_bike.visited:
         pygame.draw.rect(WIN, BLUE, (x, y, TILE_SIZE, TILE_SIZE))
     for (x, y) in pink_bike.visited:
         pygame.draw.rect(WIN, PINK, (x, y, TILE_SIZE, TILE_SIZE))
 
-def draw_position(bike, color):
-    for (x, y) in bike.visited:
-        pygame.draw.rect(WIN, color, (x, y, TILE_SIZE, TILE_SIZE))
 
-
+# bike object
 class Bike:
     def __init__(self, x, y, IMG, X_VEL, Y_VEL):
         self.x = x
@@ -70,12 +69,14 @@ class Bike:
         elif self.X_VEL == BIKE_SPEED and self.Y_VEL == 0:
             self.direction = RIGHT
 
+    # move bike along current path, add coordinate to list of visited places
     def move(self):
         self.visited += [(self.x, self.y)]
         pygame.draw.rect(WIN, BLUE, (self.x, self.y, TILE_SIZE, TILE_SIZE))
         self.x += self.X_VEL
         self.y += self.Y_VEL
 
+    # draw bike img at new location
     def draw(self):
         if self.direction == UP:
             WIN.blit(pygame.transform.rotate(self.IMG, -ROTATE), (self.x, self.y))
@@ -87,6 +88,7 @@ class Bike:
             WIN.blit(self.IMG, (self.x, self.y))
         pygame.display.update()
 
+    # if a new direction is chosen, reset the bike img and direction
     def set_direction(self, direction):
         self.direction = direction
         if self.direction == UP:
@@ -103,16 +105,18 @@ class Bike:
             self.Y_VEL = 0
 
 
+# draw all elements in the window
 def draw_window(blue_bike, pink_bike, blue_score, pink_score):
     write_scores(str(blue_score), str(pink_score))
     blue_bike.move()
     pink_bike.move()
-    draw_grid(blue_bike, pink_bike)
+    draw_visited(blue_bike, pink_bike)
     blue_bike.draw()
     pink_bike.draw()
     pygame.display.update()
 
 
+# write a word in the center of the window
 def write(word, color):
     font = pygame.font.Font(FONT, FONT_SIZE)
     text = font.render(word, True, color, BLACK)
@@ -123,6 +127,7 @@ def write(word, color):
     pygame.display.update()
 
 
+# write the current score for each bike
 def write_scores(blue_score, pink_score):
     font = pygame.font.Font(FONT, FONT_SIZE)
     text = font.render(blue_score, True, BLUE)
@@ -137,6 +142,7 @@ def write_scores(blue_score, pink_score):
     WIN.blit(text, text_rect)
 
 
+# after a death, reset to start
 def reset_players(blue_bike, pink_bike, blue_score, pink_score):
     WIN.fill(BLACK)
     spawn_grid()
@@ -151,6 +157,7 @@ def reset_players(blue_bike, pink_bike, blue_score, pink_score):
     draw_window(blue_bike, pink_bike, blue_score, pink_score)
 
 
+# check for collisions
 def check_collisions(blue_bike, pink_bike, blue_score, pink_score):
     if (blue_bike.x, blue_bike.y) in pink_bike.visited or (blue_bike.x, blue_bike.y) in blue_bike.visited\
             or blue_bike.x < 0 or blue_bike.x > WIN_WIDTH or blue_bike.y < 0 or blue_bike.y > WIN_HEIGHT:
@@ -165,17 +172,19 @@ def check_collisions(blue_bike, pink_bike, blue_score, pink_score):
     return blue_score, pink_score
 
 
+# display title, play music
 def start_screen():
     mixer.music.load("sound/son_of_flynn.mp3")
     mixer.music.play()
 
-    display_word("T", MUSIC_DELAY/4)
-    display_word("TR", MUSIC_DELAY/4)
-    display_word("TRO", MUSIC_DELAY/4)
-    display_word("TRON", MUSIC_DELAY/4)
+    display_word_with_delay("T", MUSIC_DELAY/4)
+    display_word_with_delay("TR", MUSIC_DELAY/4)
+    display_word_with_delay("TRO", MUSIC_DELAY/4)
+    display_word_with_delay("TRON", MUSIC_DELAY/4)
 
 
-def display_word(word, delay):
+# display a word and add delay for it
+def display_word_with_delay(word, delay):
     write(word, WHITE)
     pygame.display.update()
     clock = pygame.time.Clock()
@@ -188,6 +197,7 @@ def display_word(word, delay):
     WIN.fill(BLACK)
 
 
+# main game loop
 def game():
     WIN.fill(BLACK)
     start_screen()
@@ -228,7 +238,7 @@ def game():
 
 
 if __name__ == '__main__':
-     game()
+    game()
 
 
 
