@@ -10,6 +10,9 @@ Player 2's controls: WASD
 
 <h3> Installation </h3>
 1. git clone https://github.com/shayonghoshroy/light-cycle-ai.git
+<br>
 2. cd light-cycle-ai
+<br>
 3. source venv/bin/activate
+<br>
 4. python3 main.py
